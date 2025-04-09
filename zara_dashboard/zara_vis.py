@@ -1,3 +1,15 @@
+# Falls das README nicht funktioniert, ist hier nochmal der Inhalt der README:
+
+# Setup
+# change directory auf zara_dashboard in Terminal (cd zara_dashboard)
+# aktiviere die venv (source .venv/bin/activate)
+# zara_vis.py laufen lassen (streamlit run zara_vis.py)
+
+# Aufteilung
+# Planung des Dashboards: Yaren, Laélia
+# Umsetzung des Dashboards: Laélia
+# Aufwandsteilung für das Dashboard: 90% Laélia, 10% Yaren
+
 import streamlit as st
 import pandas as pd
 import numpy as np

@@ -36,13 +36,16 @@ mean_promo_impact = np.mean(promo_values)
 # Alle drei KPIs darstellen
 col1, col2, col3 = st.columns([1, 1, 0.5])
 with col1:
-    st.metric("Gesamter Umsatz", f"{total_revenue:,.2f} $")
+    st.markdown(f"<font color='green'><h2>{total_revenue:,.2f} $</h2></font>", unsafe_allow_html=True)
+    st.caption("Gesamter Umsatz")
 
 with col2:
-    st.metric("Gesamte Verkäufe", f"{total_sales_volume} Stück")
+    st.markdown(f"<font color='green'><h2>{total_sales_volume} Stück</h2></font>", unsafe_allow_html=True)
+    st.caption("Gesamte Verkäufe")
 
 with col3:
-    st.metric("Promo-Effekt:", f"{mean_promo_impact:.3f} %")
+    st.markdown(f"<font color='darkred'><h2>{mean_promo_impact:.3f} %</h2></font>", unsafe_allow_html=True)
+    st.caption("Promo-Effekt")
 
 # Whitespace
 st.columns(1)[0].write("")
@@ -64,7 +67,9 @@ with col_season:
                 names='Seasonal_Display',
                 values='Count',
                 hole=0.6,
-                labels={'Seasonal_Display': 'Saisonalität'})
+                labels={'Seasonal_Display': 'Saisonalität'},
+                color='Seasonal_Display',
+                color_discrete_map={'Saisonal': 'green', 'Nicht<br>Saisonal': 'lightgray'})
 
     st.plotly_chart(fig_seasonal, use_container_width=True)
 
@@ -78,7 +83,9 @@ with col_section:
     fig_section_spread = px.pie(section_counts,
                 names='Section',
                 values='Count',
-                hole=0.6,)
+                hole=0.6,
+                color='Section',
+                color_discrete_map={'WOMAN': 'lightcoral', 'MAN': 'dodgerblue'})
 
     st.plotly_chart(fig_section_spread, use_container_width=True)
 
@@ -96,7 +103,7 @@ fig_section_price = px.bar(section_transf,
              x='terms',
              y=['Preis WOMAN', 'Preis MAN'],
              labels={'terms': 'Produktgruppe', 'value': 'Preis', 'variable': 'Sektion'},
-             color_discrete_map={'Preis WOMAN': 'red', 'Preis MAN': 'blue'},
+             color_discrete_map={'Preis WOMAN': 'lightcoral', 'Preis MAN': 'dodgerblue'},
              )
 
 st.plotly_chart(fig_section_price)
@@ -173,6 +180,7 @@ fig_position = px.bar(position_effect,
              y='Product Position',
              x='change_to_base',
              labels={'Product Position': 'Produkt Position', 'change_to_base': 'Änderung verglichen mit Aisle'},
+             color_discrete_sequence=['darkred']
              )
 
 st.plotly_chart(fig_position)
@@ -186,33 +194,20 @@ st.columns(1)[0].write("")
 st.subheader("Meist verkauften / profitablesten Produktgruppen")
 product_groups = df.groupby('terms')[['Sales Volume', 'Revenue']].sum().reset_index()
 
+sort_by = st.radio("Sortiere Balken nach:", ['Größe', 'Alphabet'])
 metric_to_plot = st.selectbox("Wähle anzuzeigene Größe aus:", ['Sales Volume', 'Revenue'])
 
-fig_popular_profit = px.bar(product_groups,
+if sort_by == 'Größe':
+    product_groups_sorted = product_groups.sort_values(by=metric_to_plot, ascending=False)
+elif sort_by == 'Alphabet':
+    product_groups_sorted = product_groups.sort_values(by='terms')
+else:
+    product_groups_sorted = product_groups  # Default sorting
+
+fig_popular_profit = px.bar(product_groups_sorted,
              x='terms',
              y=metric_to_plot,
-             labels={'terms': 'Produktgruppe', metric_to_plot: metric_to_plot})
+             labels={'terms': 'Produktgruppe', metric_to_plot: metric_to_plot},
+             color_discrete_sequence=['lightcoral'])
 
-st.plotly_chart(fig_popular_profit, key="popular_profit_chart", on_click="plotly_click")
-
-clicked_data = st.session_state.get("plotly_click")
-
-if clicked_data:
-    clicked_term = clicked_data['points'][0]['x']
-    st.subheader(f"Preisverteilung für Produktgruppe: {clicked_term}")
-
-    # Filter the original DataFrame for the clicked term
-    term_prices = df[df['terms'] == clicked_term]['price']
-
-    if not term_prices.empty:
-        # Create a histogram of prices
-        fig_price_hist = px.histogram(term_prices,
-                                     x='price',
-                                     nbins=10,  # Adjust the number of bins as needed
-                                     labels={'price': 'Preis', 'count': 'Häufigkeit'},
-                                     title=f"Preisverteilung für {clicked_term}")
-        st.plotly_chart(fig_price_hist)
-    else:
-        st.info(f"Keine Preisdaten für die Produktgruppe '{clicked_term}' gefunden.")
-else:
-    st.info("Klicke auf eine Produktgruppe im Balkendiagramm, um die Preisverteilung anzuzeigen.")
+st.plotly_chart(fig_popular_profit)
